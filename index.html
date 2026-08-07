@@ -156,11 +156,50 @@ details.more[open] summary{border-bottom:1px solid var(--rule-soft)}
   background:var(--surface-2);font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;
   text-transform:uppercase;cursor:pointer}
 .btn.primary{background:var(--accent-soft);color:var(--accent);border-color:transparent}
-.scanout{font-family:var(--mono);font-size:.78rem;white-space:pre-wrap;word-break:break-word;
-  background:var(--surface-2);border:1px solid var(--rule-soft);border-radius:3px;padding:.7rem;
-  max-height:11rem;overflow:auto;color:var(--ink-2)}
 .bar{height:3px;background:var(--rule-soft);border-radius:2px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.howto{padding:.8rem;display:flex;flex-direction:column;gap:.55rem}
+.howto p{font-size:.85rem;color:var(--ink-2);line-height:1.5}
+.scanstat{font-family:var(--mono);font-size:.76rem;color:var(--ink-3);letter-spacing:.04em}
+.queuetools{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.queuetools .btn{padding:.5rem .75rem;font-size:.72rem}
+
+.qrow{background:var(--surface);border:1px solid var(--rule-soft);border-left-width:5px;border-radius:0 3px 3px 0;
+  margin-bottom:.5rem;overflow:hidden}
+.qrow.keep{border-left-color:var(--keep)} .qrow.dump{border-left-color:var(--dump)}
+.qrow.check{border-left-color:var(--check)} .qrow.busy{border-left-color:var(--accent)}
+.qh{display:flex;gap:.6rem;align-items:center;padding:.6rem .7rem}
+.qthumb{width:2.6rem;height:2.6rem;object-fit:cover;border-radius:3px;background:var(--surface-3);flex:none}
+.qmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1rem}
+.qname{font-weight:650;font-size:1rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qsub{font-family:var(--mono);font-size:.7rem;color:var(--ink-3);letter-spacing:.05em;
+  font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qcall{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:.22rem .45rem;border-radius:2px;white-space:nowrap;flex:none;font-weight:600}
+.qrow.keep .qcall{background:var(--keep-soft);color:var(--keep)}
+.qrow.dump .qcall{background:var(--dump-soft);color:var(--dump)}
+.qrow.check .qcall{background:var(--check-soft);color:var(--check)}
+.qrow.busy .qcall{background:var(--accent-soft);color:var(--accent)}
+
+.ivrow{display:flex;gap:.35rem;padding:0 .7rem .5rem}
+.ivcell{flex:1;display:flex;flex-direction:column;gap:.15rem}
+.ivcell span{font-family:var(--mono);font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.ivbar{height:.4rem;background:var(--surface-3);border-radius:2px;overflow:hidden}
+.ivbar i{display:block;height:100%;background:var(--accent)}
+.ivbar i.max{background:var(--keep)}
+.ivnum{font-family:var(--mono);font-size:.72rem;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.qedit{display:grid;grid-template-columns:repeat(auto-fit,minmax(7rem,1fr));gap:.4rem;padding:0 .7rem .6rem}
+.qedit input{padding:.4rem .5rem;font-size:.82rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;width:100%}
+.qact{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;padding:0 .7rem .6rem}
+.qact button{padding:.55rem;border-radius:3px;border:1px solid var(--rule);background:var(--surface-2);
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;cursor:pointer}
+.qact button.b-keep{background:var(--keep-soft);color:var(--keep);border-color:transparent}
+.qact button.b-dump{background:var(--dump-soft);color:var(--dump);border-color:transparent}
+.qwhy{padding:0 .7rem .6rem;font-size:.8rem;color:var(--ink-2);line-height:1.45}
+.qdone{opacity:.45}
+.qdbg{font-family:var(--mono);font-size:.66rem;white-space:pre-wrap;word-break:break-word;color:var(--ink-3);
+  background:var(--surface-2);border-top:1px solid var(--rule-soft);padding:.55rem .7rem;max-height:9rem;overflow:auto}
+.qdbg canvas{max-width:100%;height:auto;border:1px solid var(--rule);border-radius:2px;margin-top:.4rem;display:block}
 
 /* ---------- guide ---------- */
 .snippet{background:var(--surface);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
@@ -235,17 +274,35 @@ footer{margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--rule);font-
 
 <!-- ================= SCAN ================= -->
 <section class="panel" id="p-scan" role="tabpanel" aria-labelledby="t-scan" hidden>
-  <h2>Screenshot scan</h2>
-  <p class="hint"><strong>Best-effort, not PokeGenie.</strong> Reading Pokémon GO's font off a bright background is
-    hard, so treat this as a shortcut that fills the form for you — always eyeball what it found.
-    Typing three letters on the Decide tab is usually faster. Needs internet the first time to fetch the OCR engine.</p>
+  <h2>Batch scan</h2>
+  <details class="more" id="howBox">
+    <summary>How to shoot them — read this once</summary>
+    <div class="howto">
+      <p><strong>Shoot the box grid, not one Pokémon at a time.</strong> Because your nicknames carry the IVs
+        (<span class="mono">pika131214</span> = 13 attack, 12 defence, 14 HP), the grid view already has
+        everything needed for a verdict. One screenshot of the list becomes a dozen rows here.</p>
+      <p>Scroll a screen, screenshot, scroll, screenshot. Then drop the whole batch in at once.</p>
+      <p><strong>Single Pokémon screens work too</strong> and add the CP and moves. For anything not renamed,
+        it falls back to reading the appraisal bars — so shoot the appraisal screen for those.</p>
+    </div>
+  </details>
+
   <label class="drop" id="drop">
     <input type="file" id="file" accept="image/*" multiple>
     <span class="btn primary">Choose screenshots</span>
-    <span class="hint">or drop them here</span>
+    <span class="hint">or drop them here · box grid screenshots read a dozen at once</span>
   </label>
+
   <div class="bar"><i id="bar"></i></div>
-  <div class="scanout" id="scanout">No scan yet.</div>
+  <div class="scanstat" id="scanstat">Nothing scanned yet.</div>
+
+  <div class="queuetools" id="queuetools" hidden>
+    <button type="button" class="btn" id="applyDumps">Transfer all reds</button>
+    <button type="button" class="btn" id="clearQueue">Clear queue</button>
+    <label class="chk" id="dbgWrap"><input type="checkbox" id="dbg"><span>Show what it read</span></label>
+  </div>
+
+  <div id="queue"></div>
 </section>
 
 <!-- ================= GUIDE ================= -->
@@ -388,6 +445,29 @@ var DB = [
   {n:"Mandibuzz",    r:[], pvp:1},
   {n:"Annihilape",   r:[], pvp:1}
 ];
+
+/* Matching OCR output against a known move list is far more robust than trusting
+   the raw characters — "Dynannic Punoh" still lands on Dynamic Punch. */
+var FAST_MOVES = ["Air Slash","Astonish","Bite","Bubble","Bug Bite","Bullet Punch","Bullet Seed","Charge Beam",
+ "Charm","Confusion","Counter","Dragon Breath","Dragon Tail","Double Kick","Ember","Extrasensory","Feint Attack",
+ "Fire Fang","Fire Spin","Frost Breath","Fury Cutter","Gust","Hex","Ice Fang","Ice Shard","Incinerate",
+ "Karate Chop","Lick","Lock On","Low Kick","Metal Claw","Mud Shot","Mud-Slap","Peck","Poison Jab","Poison Sting",
+ "Powder Snow","Psycho Cut","Quick Attack","Razor Leaf","Rock Smash","Rock Throw","Scratch","Shadow Claw",
+ "Shadow Sneak","Smack Down","Snarl","Spark","Splash","Steel Wing","Sucker Punch","Tackle","Take Down",
+ "Thunder Shock","Vine Whip","Volt Switch","Water Gun","Waterfall","Wing Attack","Yawn","Zen Headbutt"];
+
+var CHARGED_MOVES = ["Aerial Ace","Aeroblast","Aqua Tail","Aura Sphere","Avalanche","Blast Burn","Blaze Kick",
+ "Bleakwind Storm","Blizzard","Body Slam","Brave Bird","Brutal Swing","Bubble Beam","Bug Buzz","Close Combat",
+ "Crabhammer","Cross Chop","Cross Poison","Crunch","Dark Pulse","Dazzling Gleam","Discharge","Double Iron Bash",
+ "Draco Meteor","Dragon Claw","Dragon Pulse","Drill Run","Dynamic Punch","Earth Power","Earthquake","Fire Blast",
+ "Flame Charge","Flamethrower","Flash Cannon","Focus Blast","Foul Play","Frenzy Plant","Fusion Bolt",
+ "Fusion Flare","Grass Knot","Gunk Shot","High Horsepower","Hydro Cannon","Hydro Pump","Hyper Beam","Ice Beam",
+ "Ice Punch","Iron Head","Leaf Blade","Magma Storm","Meteor Beam","Meteor Mash","Moonblast","Mud Bomb",
+ "Night Slash","Origin Pulse","Outrage","Overheat","Payback","Play Rough","Power Whip","Precipice Blades",
+ "Psychic","Psystrike","Rock Blast","Rock Slide","Rock Wrecker","Sacred Fire","Sacred Sword","Sand Tomb",
+ "Sandsear Storm","Seed Bomb","Shadow Ball","Shadow Force","Silver Wind","Sky Attack","Sludge Bomb","Solar Beam",
+ "Stone Edge","Superpower","Surf","Swift","Thunder","Thunder Punch","Thunderbolt","Twister","Weather Ball",
+ "Wild Charge","Wildbolt Storm","X-Scissor"];
 
 var GUARDS = [
   {k:"shiny",   l:"Shiny"},
@@ -689,6 +769,7 @@ function refresh(){ renderProgress(); renderBench(); renderVerdict(); }
 var sugIndex = -1;
 
 function suggestions(term){
+  // typing an IV nickname straight in ("mach151515") should still find the species
   var t = norm(term);
   if (!t) return [];
   var starts = [], contains = [];
@@ -776,22 +857,152 @@ function loadTesseract(){
   return tessReady;
 }
 
-function preprocess(img){
-  var maxW = 1000;
+/* Two OCR passes: GO draws white text on dark art in some places and dark text on
+   white cards in others, so we binarise both ways and keep whichever reads better. */
+function binarise(img, invert){
+  var maxW = 900;
   var scale = Math.min(1, maxW / img.width);
   var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
   var c = document.createElement("canvas");
   c.width = w; c.height = h;
   var x = c.getContext("2d");
   x.drawImage(img, 0, 0, w, h);
-  var d = x.getImageData(0, 0, w, h), a = d.data;
-  for (var i=0;i<a.length;i+=4){
+  var d = x.getImageData(0, 0, w, h), a = d.data, i;
+
+  var sum = 0, n = 0;
+  for (i=0;i<a.length;i+=4){ sum += 0.299*a[i] + 0.587*a[i+1] + 0.114*a[i+2]; n++; }
+  var mean = sum / n;                                   // adaptive threshold beats a fixed 165
+
+  for (i=0;i<a.length;i+=4){
     var g = 0.299*a[i] + 0.587*a[i+1] + 0.114*a[i+2];
-    var v = g > 165 ? 0 : 255;          // GO's text is light on darker art — invert to dark-on-white
+    var on = invert ? g > mean : g < mean;
+    var v = on ? 0 : 255;
     a[i] = a[i+1] = a[i+2] = v; a[i+3] = 255;
   }
   x.putImageData(d, 0, 0);
   return c;
+}
+
+/* ---- IV bars -------------------------------------------------------------
+   The appraisal bars are graphics, not text, so measuring pixels is far more
+   reliable than OCR. Each bar is a filled segment butted against an empty
+   track segment. Find rows that look like that, cluster them into three
+   stacked bars, and take the fill fraction of each.
+   Positions are found adaptively — nothing is hardcoded to a screen size. */
+function colDist(a, b){
+  return Math.abs(a[0]-b[0]) + Math.abs(a[1]-b[1]) + Math.abs(a[2]-b[2]);
+}
+
+function scanBarRow(px, w, y){
+  var run = [], segs = [], x, i, cur = null;
+  for (x=0;x<w;x++){
+    i = (y*w + x) * 4;
+    var c = [px[i], px[i+1], px[i+2]];
+    /* Tight threshold on purpose: a bar's empty track is often only slightly
+       different from the card behind it, and merging the two hides the bar's
+       right edge. Gradients still can't fake a bar — the split test below needs
+       a colour jump of 90+, far more than a gradient step. */
+    if (cur && colDist(cur.c, c) < 18) { cur.end = x; cur.n++; }
+    else { if (cur) segs.push(cur); cur = { c:c, start:x, end:x, n:1 }; }
+  }
+  if (cur) segs.push(cur);
+
+  /* Segments touching either edge are page background, not bar. Without this a
+     blank white row looks exactly like a fully-empty bar and floods the clusterer. */
+  var wide = [];
+  for (i=0;i<segs.length;i++){
+    var S0 = segs[i];
+    if (S0.n <= w * 0.04) continue;
+    if (S0.start <= 1 || S0.end >= w - 2) continue;
+    wide.push(S0);
+  }
+
+  // a bar reads as two adjacent interior segments of clearly different colour
+  for (i=0;i<wide.length-1;i++){
+    var A = wide[i], B = wide[i+1];
+    if (B.start - A.end > 3) continue;
+    if (colDist(A.c, B.c) < 90) continue;
+    var span = B.end - A.start;
+    if (span < w * 0.25) continue;
+    return { left:A.start, split:A.end, right:B.end, span:span, fill:(A.end - A.start) / span };
+  }
+  // fully full or fully empty bar: one wide interior segment
+  for (i=0;i<wide.length;i++){
+    var S = wide[i];
+    if (S.n < w * 0.25) continue;
+    var mx = Math.max(S.c[0], S.c[1], S.c[2]), mn = Math.min(S.c[0], S.c[1], S.c[2]);
+    var sat = mx - mn;
+    if (sat > 45) return { left:S.start, split:S.end, right:S.end, span:S.n, fill:1, solid:1 };
+    if (mx > 190 && sat < 22) return { left:S.start, split:S.start, right:S.end, span:S.n, fill:0, solid:1 };
+  }
+  return null;
+}
+
+function readIVBars(img){
+  var w = 320;
+  var scale = w / img.width;
+  var h = Math.round(img.height * scale);
+  var c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  var ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, w, h);
+  var px = ctx.getImageData(0, 0, w, h).data;
+
+  var hits = [], y;
+  for (y = Math.floor(h * 0.35); y < h; y++){
+    var r = scanBarRow(px, w, y);
+    if (r) { r.y = y; hits.push(r); }
+  }
+  if (hits.length < 6) return null;
+
+  // cluster consecutive rows into bars
+  var groups = [], g = [hits[0]];
+  for (var i=1;i<hits.length;i++){
+    if (hits[i].y - hits[i-1].y <= 2 && Math.abs(hits[i].span - hits[i-1].span) < w*0.06) g.push(hits[i]);
+    else { groups.push(g); g = [hits[i]]; }
+  }
+  groups.push(g);
+
+  var solid = [];
+  for (i=0;i<groups.length;i++) if (groups[i].length >= 3) solid.push(groups[i]);
+  if (solid.length < 3) return null;
+
+  // three bars of similar width, stacked — take the widest-consensus triple
+  solid.sort(function(a,b){ return b.length - a.length; });
+  solid = solid.slice(0, 6);
+  solid.sort(function(a,b){ return a[0].y - b[0].y; });
+
+  var best = null;
+  for (i=0;i+2<solid.length+1 && i+3<=solid.length;i++){
+    var trio = solid.slice(i, i+3);
+    var spans = [trio[0][0].span, trio[1][0].span, trio[2][0].span];
+    var spread = Math.max.apply(null, spans) - Math.min.apply(null, spans);
+    if (spread > w * 0.08) continue;
+    var gap1 = trio[1][0].y - trio[0][0].y, gap2 = trio[2][0].y - trio[1][0].y;
+    if (Math.abs(gap1 - gap2) > Math.max(6, gap1 * 0.5)) continue;
+    best = trio; break;
+  }
+  if (!best) return null;
+
+  function median(rows){
+    var f = rows.map(function(r){ return r.fill; }).sort(function(a,b){ return a-b; });
+    return f[Math.floor(f.length/2)];
+  }
+  var out = [];
+  for (i=0;i<3;i++){
+    var v = Math.round(median(best[i]) * 15);
+    out.push(Math.max(0, Math.min(15, v)));
+  }
+  return { atk:out[0], def:out[1], sta:out[2], canvas:c, rows:best };
+}
+
+function starsFromIV(a, d, s){
+  var t = a + d + s;
+  if (t >= 45) return 4;
+  if (t >= 37) return 3;
+  if (t >= 30) return 2;
+  if (t >= 23) return 1;
+  return 0;
 }
 
 function lev(a, b){
@@ -823,77 +1034,421 @@ function matchSpecies(text){
   return (best && bestScore <= Math.max(1, Math.floor(norm(best.n).length * 0.25))) ? best : null;
 }
 
-function setupScan(){
-  var drop = $("drop"), out = $("scanout"), bar = $("bar");
+/* Fuzzy-match one OCR line against a known move list. */
+function matchMove(text, list){
+  var flat = norm(text);
+  if (!flat) return null;
+  var best = null, bestD = 1e9;
+  for (var i=0;i<list.length;i++){
+    var m = norm(list[i]);
+    if (flat.indexOf(m) > -1) return list[i];
+    for (var s=0; s+m.length <= flat.length; s++){
+      var d = lev(m, flat.substr(s, m.length));
+      if (d < bestD) { bestD = d; best = list[i]; }
+    }
+  }
+  return (best && bestD <= Math.max(1, Math.floor(norm(best).length * 0.22))) ? best : null;
+}
 
-  function log(s){ out.textContent = s; }
+/* ---- Nicknames that encode IVs -------------------------------------------
+   Devon renames his Pokémon "pika131214" — prefix plus attack/defence/HP.
+   That is far more reliable than reading appraisal bars, and it survives the
+   box grid view, so one screenshot can yield a dozen Pokémon at once. */
+function parseNickname(token){
+  var m = String(token).match(/^([A-Za-z][A-Za-z'.’\-]{1,14}?)[\s\-_]*([0-9]{3,6})$/);
+  if (!m) return null;
+  var prefix = m[1], digits = m[2], iv = null;
 
-  function run(files){
-    if (!files || !files.length) return;
-    drop.classList.add("busy");
-    log("Loading OCR engine…");
-    loadTesseract().then(function(T){
-      var file = files[0];
-      if (files.length > 1) log("Scanning first of " + files.length + " (one at a time)…");
-      var img = new Image();
-      img.onload = function(){
-        URL.revokeObjectURL(img.src);
-        var canvas = preprocess(img);
-        log("Reading…");
-        T.recognize(canvas, "eng", {
-          logger: function(m){
-            if (m.status === "recognizing text") bar.style.width = Math.round(m.progress*100) + "%";
-          }
-        }).then(function(res){
-          bar.style.width = "0%";
-          drop.classList.remove("busy");
-          var text = (res && res.data && res.data.text) || "";
-          var cpm  = text.match(/\bCP\s*([0-9]{2,5})/i);
-          var mon  = matchSpecies(text);
-          var lines = [];
-          lines.push(mon ? "Species: " + mon.n : "Species: not recognised");
-          lines.push(cpm ? "CP: " + cpm[1] : "CP: not found");
-          lines.push("");
-          lines.push("Raw text:");
-          lines.push(text.trim().slice(0, 400) || "(nothing legible)");
-          log(lines.join("\n"));
+  if (digits.length === 6) {
+    iv = [ +digits.slice(0,2), +digits.slice(2,4), +digits.slice(4,6) ];
+  } else if (digits.length === 3) {
+    iv = [ +digits[0], +digits[1], +digits[2] ];          // single-digit shorthand
+  } else {
+    return { prefix: prefix, iv: null, digits: digits, ambiguous: true };
+  }
+  for (var i=0;i<3;i++) if (!(iv[i] >= 0 && iv[i] <= 15)) return { prefix:prefix, iv:null, digits:digits, ambiguous:true };
+  return { prefix: prefix, iv: iv, digits: digits };
+}
 
-          if (mon) {
-            pick(mon.n);                          // clears fields, so fill CP after
-            if (cpm) $("f-cp").value = cpm[1];
-            $("moreBox").open = true;
-            renderVerdict();
-            showTab("decide");
-            toast("Found " + mon.n + " — check it's right");
-          } else {
-            toast("Couldn't read it — enter it on the Decide tab");
-          }
-        }).catch(function(e){
-          drop.classList.remove("busy"); bar.style.width = "0%";
-          log("OCR failed: " + e.message + "\nUse the Decide tab instead.");
-        });
-      };
-      img.onerror = function(){
-        drop.classList.remove("busy");
-        log("Couldn't open that image.");
-      };
-      img.src = URL.createObjectURL(file);
-    }).catch(function(){
-      drop.classList.remove("busy");
-      log("Couldn't load the OCR engine — it needs internet the first time.\n" +
-          "The Decide tab works fully offline; use that.");
+/* Resolve a nickname prefix to a bench species: "mach" -> Machamp.
+   Falls back to a fuzzy compare, because an unresolved prefix reads as
+   TRANSFER and a single mangled character ("EHragonite") must not send a
+   bench keeper to the professor. Fuzzy hits are flagged so they get a look. */
+function speciesFromPrefix(prefix){
+  var p = norm(prefix);
+  if (p.length < 3) return null;
+
+  var hits = [], i;
+  for (i=0;i<DB.length;i++){
+    if (norm(DB[i].n).indexOf(p) === 0) hits.push(DB[i]);
+  }
+  if (hits.length === 1) return hits[0];
+  if (hits.length > 1) return null;                      // genuinely ambiguous
+
+  if (p.length < 4) return null;
+  var near = [], bestD = 1e9;
+  for (i=0;i<DB.length;i++){
+    var nm = norm(DB[i].n);
+    var d = lev(p, nm.slice(0, p.length));
+    if (d <= Math.max(1, Math.floor(p.length * 0.25))) {
+      near.push({ mon: DB[i], d: d });
+      if (d < bestD) bestD = d;
+    }
+  }
+  var best = near.filter(function(x){ return x.d === bestD; });
+  if (best.length !== 1) return null;
+  var out = Object.create(best[0].mon);
+  out.fuzzy = true;
+  return out;
+}
+
+/* Every nickname-looking token in a blob of OCR text. */
+function findNicknames(text){
+  var out = [];
+  var re = /([A-Za-z][A-Za-z'.’\-]{1,14})[\s\-_]*([0-9]{3,6})(?![0-9])/g, m;
+  while ((m = re.exec(text)) !== null) {
+    if (/^(CP|HP|XL|LV)$/i.test(m[1])) continue;         // not a nickname
+    var p = parseNickname(m[1] + m[2]);
+    if (p && p.iv) out.push(p);
+  }
+  return out;
+}
+
+/* Pull a plausible species name out of OCR text when it isn't a bench species,
+   so the row still shows something useful instead of "unknown". */
+function guessNameLine(text){
+  var lines = text.split(/\n+/), i;
+  for (i=0;i<lines.length;i++){
+    var L = lines[i].trim();
+    if (!L || L.length < 3 || L.length > 22) continue;
+    if (/\d/.test(L)) continue;
+    if (/^(CP|HP|STARDUST|CANDY|POWER UP|EVOLVE|APPRAISE|WEIGHT|HEIGHT)/i.test(L)) continue;
+    if (!/^[A-Za-z][A-Za-z' .\-]+$/.test(L)) continue;
+    return L.replace(/\s+/g, " ");
+  }
+  return null;
+}
+
+var queue = [];
+var scanning = false;
+var foundInGrid = 0;
+
+/* Returns one or more records. A box-grid screenshot full of IV nicknames
+   yields a record per Pokémon; a single detail screen yields one, with moves
+   and CP attached and appraisal bars as an IV fallback. */
+function extract(img, text){
+  var nicks = findNicknames(text);
+
+  if (nicks.length >= 2) {
+    var rows = [];
+    for (var i=0;i<nicks.length;i++){
+      var mon = speciesFromPrefix(nicks[i].prefix);
+      rows.push({
+        cp: null,
+        name: mon ? mon.n : nicks[i].prefix,
+        nick: nicks[i].prefix + nicks[i].digits,
+        mon: mon,
+        fuzzy: !!(mon && mon.fuzzy),
+        iv: { atk:nicks[i].iv[0], def:nicks[i].iv[1], sta:nicks[i].iv[2] },
+        ivSrc: "name",
+        fast: null, charged: null,
+        raw: text, grid: true
+      });
+    }
+    return rows;
+  }
+
+  var r = { cp:null, name:null, mon:null, iv:null, ivSrc:null, fast:null, charged:null, raw:text };
+
+  var cpm = text.match(/\bCP\s*[:.]?\s*([0-9]{2,5})/i);
+  if (cpm) r.cp = parseInt(cpm[1], 10);
+
+  if (nicks.length === 1) {
+    r.nick = nicks[0].prefix + nicks[0].digits;
+    r.iv = { atk:nicks[0].iv[0], def:nicks[0].iv[1], sta:nicks[0].iv[2] };
+    r.ivSrc = "name";
+    r.mon = speciesFromPrefix(nicks[0].prefix) || matchSpecies(text);
+    r.name = r.mon ? r.mon.n : nicks[0].prefix;
+  } else {
+    r.mon = matchSpecies(text);
+    r.name = r.mon ? r.mon.n : guessNameLine(text);
+  }
+
+  if (!r.iv) {
+    var bars = readIVBars(img);
+    if (bars) { r.iv = { atk:bars.atk, def:bars.def, sta:bars.sta, canvas:bars.canvas }; r.ivSrc = "bars"; }
+  }
+
+  r.fast = matchMove(text, FAST_MOVES);
+  r.charged = matchMove(text, CHARGED_MOVES);
+  if (r.fast && r.charged && norm(r.fast) === norm(r.charged)) r.charged = null;
+
+  return [r];
+}
+
+function rowCtx(row){
+  return {
+    cp: row.cp ? String(row.cp) : "",
+    fast: row.fast || "",
+    charged: row.charged || "",
+    guards: {}
+  };
+}
+
+function renderQueue(){
+  var wrap = $("queue"), showDbg = $("dbg") && $("dbg").checked;
+  if (!queue.length) { wrap.innerHTML = ""; $("queuetools").hidden = true; return; }
+  $("queuetools").hidden = false;
+
+  var h = "";
+  for (var i=0;i<queue.length;i++){
+    var row = queue[i];
+    var cls, call, why = [];
+
+    if (row.state === "busy") {
+      cls = "busy"; call = "Reading…";
+    } else if (row.state === "error") {
+      cls = "check"; call = "Failed";
+      why.push(row.error || "Couldn't read this one. Enter it on the Decide tab.");
+    } else if (row.state === "done") {
+      cls = "keep"; call = row.resolution === "kept" ? "Banked" : "Transferred";
+    } else {
+      var mon = row.name ? byName(row.name) : null;
+      var v = evaluate(mon, rowCtx(row));
+      cls = v.cls; call = v.call;
+      why = v.reasons.slice(0, 2);
+      row.verdictCls = v.cls;
+      row.mon = mon;
+    }
+
+    var sub = [];
+    if (row.fuzzy) sub.push("name guessed — check");
+    if (row.nick) sub.push(row.nick);
+    if (row.cp) sub.push("CP " + row.cp);
+    if (row.iv) {
+      var tot = row.iv.atk + row.iv.def + row.iv.sta;
+      sub.push(row.iv.atk + "/" + row.iv.def + "/" + row.iv.sta);
+      sub.push(Math.round(tot / 45 * 100) + "%");
+      sub.push("★".repeat(starsFromIV(row.iv.atk, row.iv.def, row.iv.sta)) || "0★");
+      if (row.ivSrc === "bars") sub.push("from bars");
+    }
+    if (row.fast || row.charged) sub.push((row.fast || "?") + " › " + (row.charged || "?"));
+    if (!sub.length) sub.push(row.file);
+
+    h += '<div class="qrow ' + cls + (row.state === "done" ? " qdone" : "") + '" data-i="' + i + '">';
+    h += '<div class="qh">';
+    h += row.thumb ? '<img class="qthumb" src="' + row.thumb + '" alt="">' : '<div class="qthumb"></div>';
+    h += '<div class="qmain"><div class="qname">' + esc(row.name || "Not recognised") + '</div>';
+    h += '<div class="qsub">' + esc(sub.join("  ·  ")) + '</div></div>';
+    h += '<div class="qcall">' + esc(call) + '</div></div>';
+
+    if (row.iv && row.state !== "done") {
+      var parts = [["ATK", row.iv.atk], ["DEF", row.iv.def], ["HP", row.iv.sta]];
+      h += '<div class="ivrow">';
+      for (var p=0;p<parts.length;p++){
+        var val = parts[p][1], pct = Math.round(val/15*100);
+        h += '<div class="ivcell"><span>' + parts[p][0] + ' <b class="ivnum">' + val + '</b></span>';
+        h += '<div class="ivbar"><i class="' + (val === 15 ? "max" : "") + '" style="width:' + pct + '%"></i></div></div>';
+      }
+      h += '</div>';
+    }
+
+    if (row.state !== "busy" && row.state !== "done") {
+      for (var q=0;q<why.length;q++) h += '<div class="qwhy">' + esc(why[q]) + '</div>';
+      h += '<div class="qedit">';
+      h += '<input data-fix="name" data-i="' + i + '" value="' + esc(row.name || "") + '" placeholder="Species" autocomplete="off">';
+      h += '<input data-fix="cp" data-i="' + i + '" value="' + (row.cp || "") + '" placeholder="CP" inputmode="numeric">';
+      h += '<input data-fix="fast" data-i="' + i + '" value="' + esc(row.fast || "") + '" placeholder="Fast move" autocomplete="off">';
+      h += '<input data-fix="charged" data-i="' + i + '" value="' + esc(row.charged || "") + '" placeholder="Charged move" autocomplete="off">';
+      h += '</div>';
+      h += '<div class="qact"><button type="button" class="b-keep" data-act="keep" data-i="' + i + '">Kept it</button>';
+      h += '<button type="button" class="b-dump" data-act="dump" data-i="' + i + '">Transferred</button></div>';
+    }
+
+    if (showDbg && row.raw !== undefined) {
+      h += '<div class="qdbg" data-dbg="' + i + '">' +
+           esc("IV bars: " + (row.iv ? "found" : "NOT FOUND") +
+               "  ·  CP: " + (row.cp || "not found") +
+               "  ·  species: " + (row.mon ? row.mon.n : (row.name ? row.name + " (not on bench)" : "none")) +
+               "\n\n" + (row.raw || "").trim().slice(0, 500)) + '</div>';
+    }
+    h += '</div>';
+  }
+  wrap.innerHTML = h;
+
+  if (showDbg) {
+    for (var d=0;d<queue.length;d++){
+      if (queue[d].iv && queue[d].iv.canvas) {
+        var host = wrap.querySelector('[data-dbg="' + d + '"]');
+        if (host) host.appendChild(queue[d].iv.canvas);
+      }
+    }
+  }
+
+  var fixes = wrap.querySelectorAll("input[data-fix]");
+  for (var f=0;f<fixes.length;f++){
+    fixes[f].addEventListener("change", function(){
+      var idx = parseInt(this.getAttribute("data-i"), 10);
+      var key = this.getAttribute("data-fix");
+      var val = this.value.trim();
+      if (key === "cp") queue[idx].cp = val ? parseInt(val, 10) : null;
+      else queue[idx][key] = val || null;
+      renderQueue();
     });
   }
 
-  $("file").addEventListener("change", function(){ run(this.files); });
+  var acts = wrap.querySelectorAll("button[data-act]");
+  for (var a=0;a<acts.length;a++){
+    acts[a].addEventListener("click", function(){
+      var idx = parseInt(this.getAttribute("data-i"), 10);
+      commitRow(idx, this.getAttribute("data-act"));
+    });
+  }
+}
+
+function commitRow(idx, act){
+  var row = queue[idx];
+  if (!row || row.state === "done") return;
+
+  if (act === "keep") {
+    var mon = row.name ? byName(row.name) : null;
+    var type = null;
+    if (mon && mon.r.length) {
+      for (var i=0;i<mon.r.length;i++){
+        if (countKept(mon.r[i].t) < (KEEP_TARGET[mon.r[i].t] || 3)) { type = mon.r[i].t; break; }
+      }
+      if (!type) type = mon.r[0].t;
+    }
+    state.kept.push({ name: mon ? mon.n : (row.name || "Unnamed"), type: type, cp: row.cp || null });
+    row.resolution = "kept";
+  } else {
+    state.dumped++;
+    row.resolution = "dumped";
+  }
+  row.state = "done";
+  save();
+  renderProgress(); renderBench(); renderQueue();
+}
+
+function setupScan(){
+  var drop = $("drop"), bar = $("bar"), stat = $("scanstat");
+
+  function status(s){ stat.textContent = s; }
+
+  function processNext(T, list, n, total){
+    if (!list.length) {
+      scanning = false;
+      drop.classList.remove("busy");
+      bar.style.width = "0%";
+      var msg = total + " screenshot" + (total === 1 ? "" : "s") + " · " + queue.length + " Pokémon found";
+      if (foundInGrid) msg += " (grid view read)";
+      status(msg + " · check the reds, then commit each row.");
+      renderQueue();
+      return;
+    }
+    var file = list.shift();
+    var row = { file: file.name, state: "busy", raw: "" };
+    queue.push(row);
+    renderQueue();
+    status("Reading " + n + " of " + total + "…");
+
+    var img = new Image();
+    img.onload = function(){
+      row.thumb = img.src;
+      var passes = [binarise(img, true), binarise(img, false)];
+      T.recognize(passes[0], "eng", {
+        logger: function(m){
+          if (m.status === "recognizing text") bar.style.width = Math.round(m.progress*100) + "%";
+        }
+      }).then(function(a){
+        return T.recognize(passes[1], "eng").then(function(b){
+          var ta = (a && a.data && a.data.text) || "";
+          var tb = (b && b.data && b.data.text) || "";
+          // keep whichever pass produced more of what we're looking for
+          var sa = (/\bCP\s*\d/i.test(ta) ? 3 : 0) + (matchSpecies(ta) ? 4 : 0) + ta.length / 400;
+          var sb = (/\bCP\s*\d/i.test(tb) ? 3 : 0) + (matchSpecies(tb) ? 4 : 0) + tb.length / 400;
+          return sa >= sb ? ta : tb;
+        });
+      }).then(function(text){
+        var recs = extract(img, text);
+        var idx = queue.indexOf(row);
+
+        if (!recs.length) {
+          row.state = "error"; row.error = "Nothing legible in that one.";
+        } else {
+          // first record reuses this row; a grid screenshot appends the rest
+          var first = recs[0];
+          row.state = "ready";
+          row.cp = first.cp; row.name = first.name; row.mon = first.mon;
+          row.iv = first.iv; row.ivSrc = first.ivSrc; row.nick = first.nick; row.fuzzy = first.fuzzy;
+          row.fast = first.fast; row.charged = first.charged; row.raw = first.raw;
+
+          for (var k = recs.length - 1; k >= 1; k--){
+            var extra = recs[k];
+            queue.splice(idx + 1, 0, {
+              file: row.file, state: "ready", thumb: row.thumb, fuzzy: extra.fuzzy,
+              cp: extra.cp, name: extra.name, mon: extra.mon, nick: extra.nick,
+              iv: extra.iv, ivSrc: extra.ivSrc, fast: extra.fast, charged: extra.charged,
+              raw: extra.raw
+            });
+          }
+          if (recs.length > 1) foundInGrid += recs.length;
+        }
+        renderQueue();
+        processNext(T, list, n+1, total);
+      }).catch(function(e){
+        row.state = "error"; row.error = "OCR failed: " + e.message;
+        renderQueue();
+        processNext(T, list, n+1, total);
+      });
+    };
+    img.onerror = function(){
+      row.state = "error"; row.error = "Couldn't open that image.";
+      renderQueue();
+      processNext(T, list, n+1, total);
+    };
+    img.src = URL.createObjectURL(file);
+  }
+
+  function run(files){
+    if (!files || !files.length || scanning) return;
+    var list = [];
+    for (var i=0;i<files.length;i++) if (/^image\//.test(files[i].type)) list.push(files[i]);
+    if (!list.length) { status("Those weren't images."); return; }
+
+    scanning = true;
+    drop.classList.add("busy");
+    status("Loading the OCR engine…");
+    loadTesseract().then(function(T){
+      processNext(T, list, 1, list.length);
+    }).catch(function(){
+      scanning = false;
+      drop.classList.remove("busy");
+      status("Couldn't load the OCR engine — it needs internet the first time. The Decide tab works offline.");
+    });
+  }
+
+  $("file").addEventListener("change", function(){ run(this.files); this.value = ""; });
   ["dragenter","dragover"].forEach(function(ev){
     drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("busy"); });
   });
   ["dragleave","drop"].forEach(function(ev){
-    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("busy"); });
+    drop.addEventListener(ev, function(e){ e.preventDefault(); if (!scanning) drop.classList.remove("busy"); });
   });
   drop.addEventListener("drop", function(e){
     if (e.dataTransfer && e.dataTransfer.files) run(e.dataTransfer.files);
+  });
+
+  $("dbg").addEventListener("change", renderQueue);
+  $("clearQueue").addEventListener("click", function(){
+    queue = []; renderQueue(); status("Queue cleared.");
+  });
+  $("applyDumps").addEventListener("click", function(){
+    var n = 0;
+    for (var i=0;i<queue.length;i++){
+      if (queue[i].state === "ready" && queue[i].verdictCls === "dump") { commitRow(i, "dump"); n++; }
+    }
+    toast(n ? n + " counted as transferred" : "No reds to transfer");
   });
 }
 
