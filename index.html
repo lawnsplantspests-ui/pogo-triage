@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1317">
+<title>Box Triage — Pokémon GO</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🧹</text></svg>">
+<style>
+:root{
+  --ground:#EEF0F3; --surface:#fff; --surface-2:#F6F7F9; --surface-3:#ECEFF3;
+  --ink:#131920; --ink-2:#414C59; --ink-3:#6B7787;
+  --rule:#D6DAE1; --rule-soft:#E5E8ED;
+  --accent:#1B6479; --accent-soft:#E2EEF2;
+  --keep:#2C6E4B; --keep-soft:#E0EFE6;
+  --dump:#93382F; --dump-soft:#F5E4E1;
+  --check:#8A6212; --check-soft:#F7EEDA;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:ui-sans-serif,system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ground:#0E1317; --surface:#161C22; --surface-2:#1C242B; --surface-3:#222B33;
+  --ink:#E7ECF1; --ink-2:#B3BECB; --ink-3:#7E8B9A;
+  --rule:#2B353F; --rule-soft:#222B33;
+  --accent:#6FB6CE; --accent-soft:#17303A;
+  --keep:#7CC49A; --keep-soft:#16291F;
+  --dump:#DB9188; --dump-soft:#2B1917;
+  --check:#D9B061; --check-soft:#2A2213;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;
+  padding-bottom:env(safe-area-inset-bottom)}
+button,input,select{font:inherit;color:inherit}
+
+/* ---------- shell ---------- */
+.app{max-width:44rem;margin:0 auto;padding:0 .8rem 6rem}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
+  padding:1.1rem 0 .8rem;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+header.top h1{font-family:var(--serif);font-size:1.4rem;font-weight:600;letter-spacing:-.01em}
+.progress{font-family:var(--mono);font-size:.75rem;color:var(--ink-3);letter-spacing:.06em;
+  font-variant-numeric:tabular-nums;text-align:right}
+.progress b{color:var(--accent);font-weight:600}
+
+nav.tabs{position:sticky;top:0;z-index:20;display:flex;gap:.25rem;background:var(--ground);
+  padding:.5rem 0;border-bottom:1px solid var(--rule);margin-bottom:1.1rem;overflow-x:auto}
+nav.tabs button{flex:1;min-width:5.2rem;background:none;border:1px solid transparent;border-radius:3px;
+  padding:.55rem .4rem;font-size:.82rem;letter-spacing:.04em;text-transform:uppercase;
+  font-family:var(--mono);color:var(--ink-3);cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--accent);background:var(--accent-soft);border-color:var(--rule-soft)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.panel[hidden]{display:none}
+.panel{display:flex;flex-direction:column;gap:1.1rem}
+
+h2{font-family:var(--serif);font-size:1.18rem;font-weight:600;display:flex;align-items:baseline;gap:.6rem}
+h2::after{content:"";flex:1;height:1px;background:var(--rule)}
+h3{font-size:.95rem;font-weight:650}
+p.hint{color:var(--ink-2);font-size:.88rem;line-height:1.5}
+.mono{font-family:var(--mono)}
+
+/* ---------- search ---------- */
+.searchbox{position:relative}
+.searchbox input{width:100%;padding:.85rem .9rem;font-size:1.05rem;background:var(--surface);
+  border:1px solid var(--rule);border-radius:3px}
+.searchbox input:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+.suggest{position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:30;background:var(--surface);
+  border:1px solid var(--rule);border-radius:3px;max-height:16rem;overflow-y:auto;
+  box-shadow:0 8px 24px rgba(0,0,0,.14)}
+.suggest[hidden]{display:none}
+.suggest button{display:flex;width:100%;gap:.5rem;align-items:baseline;text-align:left;background:none;
+  border:none;border-bottom:1px solid var(--rule-soft);padding:.6rem .8rem;cursor:pointer}
+.suggest button:last-child{border-bottom:none}
+.suggest button:hover,.suggest button.active{background:var(--accent-soft)}
+.suggest .sn{font-weight:650}
+.suggest .st{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+
+/* ---------- verdict ---------- */
+.verdict{border-radius:3px;border:1px solid var(--rule-soft);border-left-width:5px;
+  background:var(--surface);overflow:hidden}
+.verdict.keep{border-left-color:var(--keep)}
+.verdict.dump{border-left-color:var(--dump)}
+.verdict.check{border-left-color:var(--check)}
+.v-head{padding:.85rem .95rem;display:flex;flex-direction:column;gap:.15rem}
+.v-head .species{font-family:var(--serif);font-size:1.5rem;line-height:1.1}
+.v-head .meta{font-family:var(--mono);font-size:.75rem;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.v-call{padding:.7rem .95rem;font-family:var(--mono);font-size:1.05rem;letter-spacing:.1em;
+  text-transform:uppercase;font-weight:600;display:flex;align-items:center;gap:.5rem}
+.verdict.keep .v-call{background:var(--keep-soft);color:var(--keep)}
+.verdict.dump .v-call{background:var(--dump-soft);color:var(--dump)}
+.verdict.check .v-call{background:var(--check-soft);color:var(--check)}
+.v-body{padding:.85rem .95rem;display:flex;flex-direction:column;gap:.75rem;
+  border-top:1px solid var(--rule-soft)}
+.reason{display:flex;gap:.55rem;align-items:flex-start;font-size:.9rem;color:var(--ink-2);line-height:1.45}
+.reason::before{content:"—";color:var(--ink-3);flex:none}
+
+.roleblk{background:var(--surface-2);border:1px solid var(--rule-soft);border-radius:3px;padding:.65rem .75rem;
+  display:flex;flex-direction:column;gap:.3rem}
+.roleblk .rt{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.dot{width:.6rem;height:.6rem;border-radius:50%;flex:none}
+.roleblk .rname{font-weight:650;font-size:.9rem}
+.slots{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;color:var(--ink-3);margin-left:auto}
+.slots.open{color:var(--keep)}
+.slots.full{color:var(--dump)}
+.mvline{font-family:var(--mono);font-size:.82rem;color:var(--ink-2);line-height:1.5}
+.mvline .ok{color:var(--keep)}
+.mvline .bad{color:var(--dump)}
+.tag{font-family:var(--mono);font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:.06rem .35rem;border-radius:2px;background:var(--check-soft);color:var(--check)}
+
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.actions button{padding:.8rem .5rem;border-radius:3px;border:1px solid var(--rule);background:var(--surface-2);
+  font-family:var(--mono);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.actions button.b-keep{background:var(--keep-soft);color:var(--keep);border-color:transparent}
+.actions button.b-dump{background:var(--dump-soft);color:var(--dump);border-color:transparent}
+.actions button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.actions button:active{transform:translateY(1px)}
+
+/* ---------- detail inputs ---------- */
+details.more{background:var(--surface);border:1px solid var(--rule-soft);border-radius:3px}
+details.more summary{padding:.65rem .8rem;cursor:pointer;font-family:var(--mono);font-size:.78rem;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+details.more[open] summary{border-bottom:1px solid var(--rule-soft)}
+.fields{padding:.8rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(8.5rem,1fr));gap:.6rem}
+.field{display:flex;flex-direction:column;gap:.22rem}
+.field label{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.field input,.field select{padding:.55rem .6rem;background:var(--surface-2);border:1px solid var(--rule);border-radius:3px;width:100%}
+.guards-row{padding:0 .8rem .8rem;display:flex;flex-wrap:wrap;gap:.4rem}
+.chk{display:flex;align-items:center;gap:.35rem;background:var(--surface-2);border:1px solid var(--rule);
+  border-radius:3px;padding:.35rem .55rem;font-size:.82rem;cursor:pointer}
+.chk input{accent-color:var(--accent);width:1rem;height:1rem}
+.chk.on{background:var(--dump-soft);border-color:transparent;color:var(--dump)}
+
+/* ---------- bench ---------- */
+.benchgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.55rem}
+.bcard{background:var(--surface);border:1px solid var(--rule-soft);border-left:4px solid var(--tc);
+  border-radius:0 3px 3px 0;padding:.6rem .75rem;display:flex;flex-direction:column;gap:.3rem}
+.bcard .bh{display:flex;align-items:center;gap:.45rem}
+.bcard .bh h3{flex:1}
+.pips{display:flex;gap:.2rem}
+.pip{width:.55rem;height:.55rem;border-radius:50%;border:1px solid var(--tc)}
+.pip.on{background:var(--tc)}
+.bcard ul{list-style:none;display:flex;flex-direction:column;gap:.15rem}
+.bcard li{display:flex;gap:.4rem;align-items:baseline;font-size:.85rem}
+.bcard li .cp{font-family:var(--mono);font-size:.72rem;color:var(--ink-3);margin-left:auto;font-variant-numeric:tabular-nums}
+.bcard li button{background:none;border:none;color:var(--ink-3);cursor:pointer;font-size:.9rem;line-height:1;padding:0 .1rem}
+.bcard li button:hover{color:var(--dump)}
+.empty{font-size:.82rem;color:var(--ink-3);font-style:italic}
+
+/* ---------- scan ---------- */
+.drop{border:2px dashed var(--rule);border-radius:3px;padding:1.6rem 1rem;text-align:center;
+  background:var(--surface);display:flex;flex-direction:column;gap:.5rem;align-items:center}
+.drop.busy{border-color:var(--accent);background:var(--accent-soft)}
+.drop input{display:none}
+.btn{display:inline-block;padding:.7rem 1.1rem;border-radius:3px;border:1px solid var(--rule);
+  background:var(--surface-2);font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;
+  text-transform:uppercase;cursor:pointer}
+.btn.primary{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.scanout{font-family:var(--mono);font-size:.78rem;white-space:pre-wrap;word-break:break-word;
+  background:var(--surface-2);border:1px solid var(--rule-soft);border-radius:3px;padding:.7rem;
+  max-height:11rem;overflow:auto;color:var(--ink-2)}
+.bar{height:3px;background:var(--rule-soft);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+
+/* ---------- guide ---------- */
+.snippet{background:var(--surface);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.snippet .sh{display:flex;justify-content:space-between;align-items:center;gap:.8rem;padding:.45rem .7rem;
+  background:var(--surface-2);border-bottom:1px solid var(--rule-soft)}
+.snippet .sh span{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.snippet pre{margin:0;padding:.7rem;overflow-x:auto;font-family:var(--mono);font-size:.76rem;line-height:1.6}
+.snippet button{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent);background:none;border:1px solid var(--rule);border-radius:2px;padding:.22rem .5rem;cursor:pointer}
+.guard{background:var(--dump-soft);border-left:3px solid var(--dump);border-radius:0 3px 3px 0;padding:.6rem .8rem}
+.guard h3{color:var(--dump);font-size:.88rem}
+.guard p{font-size:.82rem;color:var(--ink-2);margin-top:.15rem}
+.gg{display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:.5rem}
+a{color:var(--accent);text-underline-offset:.15em}
+footer{margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--rule);font-size:.78rem;color:var(--ink-3);
+  display:flex;flex-direction:column;gap:.4rem}
+.danger{background:none;border:1px solid var(--rule);color:var(--ink-3);border-radius:3px;
+  padding:.5rem .8rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.07em;
+  text-transform:uppercase;cursor:pointer;align-self:flex-start}
+.danger:hover{color:var(--dump);border-color:var(--dump)}
+.toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%) translateY(150%);
+  background:var(--ink);color:var(--ground);padding:.6rem 1rem;border-radius:3px;font-size:.85rem;
+  z-index:60;transition:transform .22s;max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header class="top">
+  <h1>Box Triage</h1>
+  <div class="progress" id="progress"></div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="t-decide" aria-selected="true" aria-controls="p-decide">Decide</button>
+  <button role="tab" id="t-bench" aria-selected="false" aria-controls="p-bench">Bench</button>
+  <button role="tab" id="t-scan" aria-selected="false" aria-controls="p-scan">Scan</button>
+  <button role="tab" id="t-guide" aria-selected="false" aria-controls="p-guide">Guide</button>
+</nav>
+
+<!-- ================= DECIDE ================= -->
+<section class="panel" id="p-decide" role="tabpanel" aria-labelledby="t-decide">
+  <div class="searchbox">
+    <input id="q" type="text" placeholder="Type a species name…" autocomplete="off"
+           autocapitalize="words" spellcheck="false" enterkeyhint="search">
+    <div class="suggest" id="suggest" hidden></div>
+  </div>
+
+  <details class="more" id="moreBox">
+    <summary>Optional detail — moves, CP, protections</summary>
+    <div class="fields">
+      <div class="field"><label for="f-cp">CP</label><input id="f-cp" type="number" inputmode="numeric" min="10" max="6000"></div>
+      <div class="field"><label for="f-fast">Fast move</label><input id="f-fast" type="text" autocomplete="off" list="movelist"></div>
+      <div class="field"><label for="f-charged">Charged move</label><input id="f-charged" type="text" autocomplete="off" list="movelist"></div>
+    </div>
+    <datalist id="movelist"></datalist>
+    <div class="guards-row" id="guards"></div>
+  </details>
+
+  <div id="verdictWrap"></div>
+</section>
+
+<!-- ================= BENCH ================= -->
+<section class="panel" id="p-bench" role="tabpanel" aria-labelledby="t-bench" hidden>
+  <h2>Your bench</h2>
+  <p class="hint">Slots fill as you mark keepers. When a type is full, further copies of that species come back
+    <strong>TRANSFER</strong> unless they beat what you already have.</p>
+  <div class="benchgrid" id="benchgrid"></div>
+</section>
+
+<!-- ================= SCAN ================= -->
+<section class="panel" id="p-scan" role="tabpanel" aria-labelledby="t-scan" hidden>
+  <h2>Screenshot scan</h2>
+  <p class="hint"><strong>Best-effort, not PokeGenie.</strong> Reading Pokémon GO's font off a bright background is
+    hard, so treat this as a shortcut that fills the form for you — always eyeball what it found.
+    Typing three letters on the Decide tab is usually faster. Needs internet the first time to fetch the OCR engine.</p>
+  <label class="drop" id="drop">
+    <input type="file" id="file" accept="image/*" multiple>
+    <span class="btn primary">Choose screenshots</span>
+    <span class="hint">or drop them here</span>
+  </label>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="scanout" id="scanout">No scan yet.</div>
+</section>
+
+<!-- ================= GUIDE ================= -->
+<section class="panel" id="p-guide" role="tabpanel" aria-labelledby="t-guide" hidden>
+  <h2>Do this first</h2>
+  <div class="snippet">
+    <div class="sh"><span>Find everything with a legacy move</span><button type="button" data-copy="@special">Copy</button></div>
+    <pre>@special</pre>
+  </div>
+  <p class="hint">Tag every result <span class="mono">keep</span> before you transfer anything. Community Day and
+    event moves only come back with an Elite TM.</p>
+
+  <h2>The transfer net</h2>
+  <div class="snippet">
+    <div class="sh"><span>Paste into the in-game search bar</span><button type="button" data-copy="!tag:keep&amp;!favorite&amp;!shiny&amp;!lucky&amp;!shadow&amp;!purified&amp;!legendary&amp;!mythical&amp;!costume&amp;!@special&amp;1-2*">Copy</button></div>
+    <pre>!tag:keep&amp;!favorite&amp;!shiny&amp;!lucky&amp;!shadow&amp;!purified&amp;!legendary&amp;!mythical&amp;!costume&amp;!@special&amp;1-2*</pre>
+  </div>
+
+  <h2>Never transfer</h2>
+  <div class="gg">
+    <div class="guard"><h3>Legacy moves</h3><p>Blast Burn, Hydro Cannon, Frenzy Plant, Meteor Mash, Rock Wrecker. Elite TM only.</p></div>
+    <div class="guard"><h3>Low CP, high bulk</h3><p>The best Great League mons look like junk in a CP sort. Low attack buys bulk under the cap.</p></div>
+    <div class="guard"><h3>Shadows</h3><p>Purple flame = 20% more damage than the clean version. A shadow bench mon outranks a normal one.</p></div>
+    <div class="guard"><h3>Costumes &amp; XXL/XS</h3><p>Permanently unobtainable once gone, even though they do nothing.</p></div>
+  </div>
+
+  <h2>TM rules</h2>
+  <div class="gg">
+    <div class="guard"><h3>Pick the keeper first</h3><p>Regular TMs reroll at random. Don't burn them until you've committed to one copy.</p></div>
+    <div class="guard"><h3>Elite TMs are for legacy only</h3><p>Never spend one on a move you could reroll into normally.</p></div>
+  </div>
+
+  <footer>
+    <p>Live rankings, because the meta shifts: <a href="https://pvpoke.com/">PvPoke</a> for PvP ·
+      <a href="https://www.pokebattler.com/raids/attackers/rankings">Pokebattler</a> for a specific raid boss ·
+      <a href="https://www.dittobase.com/pokemon-go/best-attackers/overall">Dittobase</a> for attacker lists.</p>
+    <p>Movesets here are the long-standing best options and can change with rebalances. The species list is the
+      durable part — confirm the exact move before spending a TM. Transfers are permanent.</p>
+    <button class="danger" id="reset" type="button">Reset bench &amp; counts</button>
+  </footer>
+</section>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Bench data. k = how many of that type to keep.
+   lg = the recommended charged move is legacy / Community Day.
+   ============================================================ */
+var TYPE_COLOR = {
+  Fire:"#D9482F", Water:"#3B7BD4", Grass:"#4E9E43", Electric:"#C9A227",
+  Ice:"#6FBFC4", Rock:"#A08A33", Ground:"#B08A4A", Flying:"#8A7BD6",
+  Psychic:"#D65A80", Dark:"#6B584A", Ghost:"#6A5490", Dragon:"#6B3FD4",
+  Steel:"#8E93B5", Fighting:"#B03A32", Fairy:"#D97BA0", Bug:"#94A02E", Poison:"#8E3E96"
+};
+var KEEP_TARGET = {
+  Fire:3, Water:3, Grass:3, Electric:3, Ice:3, Rock:3, Ground:3, Dark:3,
+  Ghost:3, Dragon:3, Fighting:3, Flying:2, Psychic:2, Steel:2, Fairy:2, Bug:1, Poison:1
+};
+var TYPE_USE = {
+  Fire:"Grass, Ice, Bug, Steel", Water:"Fire, Ground, Rock", Grass:"Water, Ground, Rock",
+  Electric:"Water, Flying", Ice:"Dragon, Flying, Grass, Ground", Rock:"Flying, Fire, Bug, Ice",
+  Ground:"Electric, Fire, Poison, Rock, Steel", Flying:"Grass, Fighting, Bug",
+  Psychic:"Fighting, Poison", Dark:"Psychic, Ghost", Ghost:"Psychic, Ghost",
+  Dragon:"Dragon", Steel:"Fairy, Ice, Rock", Fighting:"Normal, Rock, Steel, Ice, Dark",
+  Fairy:"Dragon, Dark, Fighting", Bug:"Psychic, Dark", Poison:"Fairy"
+};
+
+var DB = [
+  {n:"Chandelure",   r:[{t:"Fire",f:"Fire Spin",c:"Overheat"},{t:"Ghost",f:"Hex",c:"Shadow Ball"}]},
+  {n:"Blaziken",     r:[{t:"Fire",f:"Fire Spin",c:"Blast Burn",lg:1}]},
+  {n:"Charizard",    r:[{t:"Fire",f:"Fire Spin",c:"Blast Burn",lg:1}]},
+  {n:"Darmanitan",   r:[{t:"Fire",f:"Fire Fang",c:"Overheat"}]},
+  {n:"Swampert",     r:[{t:"Water",f:"Water Gun",c:"Hydro Cannon",lg:1}], pvp:1},
+  {n:"Feraligatr",   r:[{t:"Water",f:"Water Gun",c:"Hydro Cannon",lg:1}]},
+  {n:"Empoleon",     r:[{t:"Water",f:"Waterfall",c:"Hydro Cannon",lg:1}]},
+  {n:"Kingler",      r:[{t:"Water",f:"Bubble",c:"Crabhammer"}]},
+  {n:"Blastoise",    r:[{t:"Water",f:"Water Gun",c:"Hydro Cannon",lg:1}]},
+  {n:"Roserade",     r:[{t:"Grass",f:"Razor Leaf",c:"Grass Knot"},{t:"Poison",f:"Poison Jab",c:"Sludge Bomb"}]},
+  {n:"Sceptile",     r:[{t:"Grass",f:"Fury Cutter",c:"Frenzy Plant",lg:1}]},
+  {n:"Venusaur",     r:[{t:"Grass",f:"Vine Whip",c:"Frenzy Plant",lg:1}]},
+  {n:"Torterra",     r:[{t:"Grass",f:"Razor Leaf",c:"Frenzy Plant",lg:1}]},
+  {n:"Tangrowth",    r:[{t:"Grass",f:"Vine Whip",c:"Power Whip"}]},
+  {n:"Electivire",   r:[{t:"Electric",f:"Thunder Shock",c:"Wild Charge"}]},
+  {n:"Magnezone",    r:[{t:"Electric",f:"Spark",c:"Wild Charge"}]},
+  {n:"Luxray",       r:[{t:"Electric",f:"Spark",c:"Wild Charge"}]},
+  {n:"Raikou",       r:[{t:"Electric",f:"Thunder Shock",c:"Wild Charge"}]},
+  {n:"Zapdos",       r:[{t:"Electric",f:"Thunder Shock",c:"Thunderbolt"}]},
+  {n:"Mamoswine",    r:[{t:"Ice",f:"Powder Snow",c:"Avalanche"},{t:"Ground",f:"Mud-Slap",c:"High Horsepower"}]},
+  {n:"Weavile",      r:[{t:"Ice",f:"Ice Shard",c:"Avalanche"},{t:"Dark",f:"Snarl",c:"Foul Play"}]},
+  {n:"Glaceon",      r:[{t:"Ice",f:"Frost Breath",c:"Avalanche"}]},
+  {n:"Galarian Darmanitan", r:[{t:"Ice",f:"Ice Fang",c:"Avalanche"}]},
+  {n:"Baxcalibur",   r:[{t:"Ice",f:"Ice Fang",c:"Avalanche"},{t:"Dragon",f:"Dragon Tail",c:"Outrage"}]},
+  {n:"Rampardos",    r:[{t:"Rock",f:"Smack Down",c:"Rock Slide"}]},
+  {n:"Rhyperior",    r:[{t:"Rock",f:"Smack Down",c:"Rock Wrecker",lg:1},{t:"Ground",f:"Mud-Slap",c:"Earthquake"}]},
+  {n:"Tyranitar",    r:[{t:"Rock",f:"Smack Down",c:"Stone Edge"},{t:"Dark",f:"Bite",c:"Crunch"}]},
+  {n:"Gigalith",     r:[{t:"Rock",f:"Smack Down",c:"Meteor Beam"}]},
+  {n:"Aerodactyl",   r:[{t:"Rock",f:"Rock Throw",c:"Rock Slide"}]},
+  {n:"Garchomp",     r:[{t:"Ground",f:"Mud Shot",c:"Earth Power"},{t:"Dragon",f:"Dragon Tail",c:"Outrage"}]},
+  {n:"Excadrill",    r:[{t:"Ground",f:"Mud-Slap",c:"Drill Run"},{t:"Steel",f:"Metal Claw",c:"Iron Head"}]},
+  {n:"Staraptor",    r:[{t:"Flying",f:"Gust",c:"Brave Bird"}]},
+  {n:"Moltres",      r:[{t:"Flying",f:"Wing Attack",c:"Sky Attack"}]},
+  {n:"Braviary",     r:[{t:"Flying",f:"Air Slash",c:"Brave Bird"}]},
+  {n:"Honchkrow",    r:[{t:"Dark",f:"Snarl",c:"Dark Pulse"}]},
+  {n:"Espeon",       r:[{t:"Psychic",f:"Confusion",c:"Psychic"}]},
+  {n:"Alakazam",     r:[{t:"Psychic",f:"Confusion",c:"Psychic"}]},
+  {n:"Gardevoir",    r:[{t:"Psychic",f:"Confusion",c:"Psychic"},{t:"Fairy",f:"Charm",c:"Dazzling Gleam"}]},
+  {n:"Hydreigon",    r:[{t:"Dark",f:"Bite",c:"Brutal Swing"}]},
+  {n:"Houndoom",     r:[{t:"Dark",f:"Snarl",c:"Foul Play"}]},
+  {n:"Gengar",       r:[{t:"Ghost",f:"Shadow Claw",c:"Shadow Ball"},{t:"Poison",f:"Lick",c:"Sludge Bomb"}]},
+  {n:"Banette",      r:[{t:"Ghost",f:"Shadow Claw",c:"Shadow Ball"}]},
+  {n:"Dragapult",    r:[{t:"Ghost",f:"Hex",c:"Shadow Ball"},{t:"Dragon",f:"Dragon Tail",c:"Dragon Pulse"}]},
+  {n:"Dragonite",    r:[{t:"Dragon",f:"Dragon Tail",c:"Outrage"}]},
+  {n:"Salamence",    r:[{t:"Dragon",f:"Dragon Tail",c:"Outrage"}]},
+  {n:"Haxorus",      r:[{t:"Dragon",f:"Dragon Tail",c:"Outrage"}]},
+  {n:"Metagross",    r:[{t:"Steel",f:"Bullet Punch",c:"Meteor Mash",lg:1}]},
+  {n:"Melmetal",     r:[{t:"Steel",f:"Thunder Shock",c:"Double Iron Bash"}]},
+  {n:"Machamp",      r:[{t:"Fighting",f:"Counter",c:"Dynamic Punch"}]},
+  {n:"Lucario",      r:[{t:"Fighting",f:"Counter",c:"Aura Sphere"}]},
+  {n:"Conkeldurr",   r:[{t:"Fighting",f:"Counter",c:"Dynamic Punch"}]},
+  {n:"Terrakion",    r:[{t:"Fighting",f:"Double Kick",c:"Sacred Sword"},{t:"Rock",f:"Smack Down",c:"Rock Slide"}]},
+  {n:"Togekiss",     r:[{t:"Fairy",f:"Charm",c:"Dazzling Gleam"}]},
+  {n:"Sylveon",      r:[{t:"Fairy",f:"Charm",c:"Dazzling Gleam"}]},
+  {n:"Scizor",       r:[{t:"Bug",f:"Fury Cutter",c:"X-Scissor"},{t:"Steel",f:"Bullet Punch",c:"Iron Head"}]},
+  {n:"Volcarona",    r:[{t:"Bug",f:"Bug Bite",c:"Bug Buzz"},{t:"Fire",f:"Fire Spin",c:"Overheat"}]},
+  /* PvP-only staples: no raid bench slot, but never mass-transfer */
+  {n:"Azumarill",    r:[], pvp:1},
+  {n:"Registeel",    r:[], pvp:1},
+  {n:"Medicham",     r:[], pvp:1},
+  {n:"Skarmory",     r:[], pvp:1},
+  {n:"Umbreon",      r:[], pvp:1},
+  {n:"Galarian Stunfisk", r:[], pvp:1},
+  {n:"Lanturn",      r:[], pvp:1},
+  {n:"Altaria",      r:[], pvp:1},
+  {n:"Bastiodon",    r:[], pvp:1},
+  {n:"Trevenant",    r:[], pvp:1},
+  {n:"Mandibuzz",    r:[], pvp:1},
+  {n:"Annihilape",   r:[], pvp:1}
+];
+
+var GUARDS = [
+  {k:"shiny",   l:"Shiny"},
+  {k:"lucky",   l:"Lucky"},
+  {k:"shadow",  l:"Shadow"},
+  {k:"legacy",  l:"Legacy move"},
+  {k:"costume", l:"Costume"},
+  {k:"hundo",   l:"4★ / hundo"},
+  {k:"xxl",     l:"XXL / XS"},
+  {k:"buddy",   l:"Best Buddy"}
+];
+
+/* ============================================================
+   State
+   ============================================================ */
+var STORE = "pogo-triage-v1";
+var state = { start: 2678, kept: [], dumped: 0 };
+
+function load(){
+  try {
+    var raw = localStorage.getItem(STORE);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p === "object") {
+        state.start  = typeof p.start  === "number" ? p.start  : 2678;
+        state.kept   = Array.isArray(p.kept) ? p.kept : [];
+        state.dumped = typeof p.dumped === "number" ? p.dumped : 0;
+      }
+    }
+  } catch (e) { /* private mode or blocked storage — run in-memory */ }
+}
+function save(){
+  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+}
+
+function byName(n){
+  var t = norm(n);
+  for (var i=0;i<DB.length;i++) if (norm(DB[i].n) === t) return DB[i];
+  return null;
+}
+function norm(s){ return String(s||"").toLowerCase().replace(/[^a-z]/g,""); }
+function countKept(type){
+  var c = 0;
+  for (var i=0;i<state.kept.length;i++) if (state.kept[i].type === type) c++;
+  return c;
+}
+
+/* ============================================================
+   Verdict engine
+   ============================================================ */
+function evaluate(mon, ctx){
+  var guardsOn = [];
+  for (var i=0;i<GUARDS.length;i++) if (ctx.guards[GUARDS[i].k]) guardsOn.push(GUARDS[i].l);
+
+  var out = { call:"", cls:"", reasons:[], roles:[] };
+
+  if (guardsOn.length) {
+    out.call = "Keep — protected";
+    out.cls  = "keep";
+    out.reasons.push(guardsOn.join(", ") + ". Protected regardless of how it performs.");
+  }
+
+  if (!mon) {
+    if (!out.call) {
+      out.call = "Transfer";
+      out.cls  = "dump";
+      out.reasons.push("Not on the raid bench and not a PvP staple. Nothing here is worth a storage slot.");
+      out.reasons.push("Tick a protection above if it's shiny, lucky, shadow, costume, or carries a legacy move.");
+    }
+    return out;
+  }
+
+  var openRole = null, fullRoles = [];
+  for (var j=0;j<mon.r.length;j++) {
+    var role = mon.r[j];
+    var have = countKept(role.t);
+    var want = KEEP_TARGET[role.t] || 3;
+    var rec  = { role: role, have: have, want: want, open: have < want };
+    out.roles.push(rec);
+    if (rec.open && !openRole) openRole = rec;
+    if (!rec.open) fullRoles.push(role.t);
+  }
+
+  if (!out.call) {
+    if (openRole) {
+      out.call = "Keep — " + openRole.role.t + " bench";
+      out.cls  = "keep";
+      out.reasons.push("You have " + openRole.have + " of " + openRole.want + " " +
+        openRole.role.t + " attackers. This fills a slot.");
+      out.reasons.push(openRole.role.t + " beats " + TYPE_USE[openRole.role.t] + ".");
+    } else if (mon.pvp) {
+      out.call = "Check PvPoke first";
+      out.cls  = "check";
+      out.reasons.push("Long-running PvP staple. Low CP and low stars are not evidence it's bad — " +
+        "run the rank checker before you transfer it.");
+    } else if (mon.r.length) {
+      out.call = "Transfer";
+      out.cls  = "dump";
+      out.reasons.push("Bench already full for " + fullRoles.join(" and ") +
+        ". Keep it only if it beats one you've already banked.");
+    } else {
+      out.call = "Transfer";
+      out.cls  = "dump";
+      out.reasons.push("No raid role and no PvP role.");
+    }
+  }
+
+  if (mon.pvp && out.cls !== "check") {
+    out.reasons.push("Also a PvP staple — worth checking its Great League rank before it goes.");
+  }
+  return out;
+}
+
+function moveCheck(role, ctx){
+  var res = { fast:null, charged:null, advice:[] };
+  if (ctx.fast)    res.fast    = norm(ctx.fast)    === norm(role.f);
+  if (ctx.charged) res.charged = norm(ctx.charged) === norm(role.c);
+
+  if (res.fast === false)    res.advice.push("Fast TM to " + role.f + ".");
+  if (res.charged === false) {
+    res.advice.push(role.lg
+      ? "Charged move is wrong, and " + role.c + " is a legacy move — only an Elite TM gets it back."
+      : "Charged TM to " + role.c + ".");
+  }
+  if (res.fast === true && res.charged === true) res.advice.push("Moveset is already correct. Don't TM it.");
+  return res;
+}
+
+/* ============================================================
+   Rendering
+   ============================================================ */
+var $ = function(id){ return document.getElementById(id); };
+var current = null;
+
+function ctxRead(){
+  var g = {};
+  for (var i=0;i<GUARDS.length;i++){
+    var el = $("g-"+GUARDS[i].k);
+    g[GUARDS[i].k] = !!(el && el.checked);
+  }
+  return {
+    cp: $("f-cp").value.trim(),
+    fast: $("f-fast").value.trim(),
+    charged: $("f-charged").value.trim(),
+    guards: g
+  };
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+
+function renderVerdict(){
+  var wrap = $("verdictWrap");
+  if (!current) { wrap.innerHTML = ""; return; }
+
+  var ctx = ctxRead();
+  var mon = byName(current);
+  var v   = evaluate(mon, ctx);
+  var displayName = mon ? mon.n : current;
+
+  var meta = [];
+  if (ctx.cp) meta.push("CP " + ctx.cp);
+  if (mon && mon.r.length) {
+    var ts = [];
+    for (var i=0;i<mon.r.length;i++) ts.push(mon.r[i].t);
+    meta.push(ts.join(" · "));
+  } else if (mon && mon.pvp) {
+    meta.push("PvP staple");
+  } else if (!mon) {
+    meta.push("Not on bench");
+  }
+
+  var h = '<div class="verdict ' + v.cls + '">';
+  h += '<div class="v-head"><span class="species">' + esc(displayName) + '</span>';
+  h += '<span class="meta">' + esc(meta.join("  ·  ")) + '</span></div>';
+  h += '<div class="v-call">' + esc(v.call) + '</div>';
+  h += '<div class="v-body">';
+
+  for (var r=0;r<v.reasons.length;r++) h += '<p class="reason">' + esc(v.reasons[r]) + '</p>';
+
+  for (var k=0;k<v.roles.length;k++) {
+    var rec  = v.roles[k];
+    var role = rec.role;
+    var col  = TYPE_COLOR[role.t] || "#888";
+    var mc   = moveCheck(role, ctx);
+
+    h += '<div class="roleblk"><div class="rt">';
+    h += '<span class="dot" style="background:' + col + '"></span>';
+    h += '<span class="rname">' + esc(role.t) + ' attacker</span>';
+    if (role.lg) h += '<span class="tag">legacy move</span>';
+    h += '<span class="slots ' + (rec.open ? "open" : "full") + '">' +
+         rec.have + "/" + rec.want + ' slots</span></div>';
+
+    var fCls = mc.fast === null ? "" : (mc.fast ? "ok" : "bad");
+    var cCls = mc.charged === null ? "" : (mc.charged ? "ok" : "bad");
+    h += '<div class="mvline">Want: <span class="' + fCls + '">' + esc(role.f) + '</span> › <span class="' +
+         cCls + '">' + esc(role.c) + '</span></div>';
+    for (var a=0;a<mc.advice.length;a++) h += '<div class="mvline">' + esc(mc.advice[a]) + '</div>';
+    h += '</div>';
+  }
+
+  h += '<div class="actions">';
+  h += '<button type="button" class="b-keep" id="doKeep">Kept it</button>';
+  h += '<button type="button" class="b-dump" id="doDump">Transferred</button>';
+  h += '</div></div></div>';
+
+  wrap.innerHTML = h;
+
+  $("doKeep").onclick = function(){
+    var m = byName(current);
+    var type = null;
+    if (v.roles.length) {
+      for (var i=0;i<v.roles.length;i++) if (v.roles[i].open) { type = v.roles[i].role.t; break; }
+      if (!type) type = v.roles[0].role.t;
+    }
+    state.kept.push({
+      name: m ? m.n : current,
+      type: type,
+      cp: ctx.cp ? parseInt(ctx.cp,10) : null
+    });
+    save(); refresh();
+    toast("Banked " + (m ? m.n : current) + (type ? " · " + type + " bench" : ""));
+    clearEntry();
+  };
+  $("doDump").onclick = function(){
+    state.dumped++;
+    save(); refresh();
+    toast("Counted as transferred");
+    clearEntry();
+  };
+}
+
+function clearEntry(){
+  current = null;
+  $("q").value = "";
+  $("f-cp").value = "";
+  $("f-fast").value = "";
+  $("f-charged").value = "";
+  for (var i=0;i<GUARDS.length;i++){
+    var el = $("g-"+GUARDS[i].k);
+    if (el) { el.checked = false; el.parentNode.classList.remove("on"); }
+  }
+  $("verdictWrap").innerHTML = "";
+  $("q").focus();
+}
+
+function renderBench(){
+  var types = Object.keys(KEEP_TARGET);
+  var h = "";
+  for (var i=0;i<types.length;i++){
+    var t = types[i], want = KEEP_TARGET[t], col = TYPE_COLOR[t];
+    var mine = [];
+    for (var j=0;j<state.kept.length;j++) if (state.kept[j].type === t) mine.push({e:state.kept[j], i:j});
+
+    h += '<div class="bcard" style="--tc:' + col + '"><div class="bh">';
+    h += '<span class="dot" style="background:' + col + '"></span><h3>' + t + '</h3><span class="pips">';
+    for (var p=0;p<want;p++) h += '<span class="pip' + (p < mine.length ? " on" : "") + '"></span>';
+    h += '</span></div>';
+
+    if (!mine.length) {
+      h += '<p class="empty">Empty — beats ' + esc(TYPE_USE[t]) + '</p>';
+    } else {
+      h += "<ul>";
+      for (var m=0;m<mine.length;m++){
+        h += '<li><span>' + esc(mine[m].e.name) + '</span>';
+        if (mine[m].e.cp) h += '<span class="cp">CP ' + mine[m].e.cp + '</span>';
+        h += '<button type="button" data-drop="' + mine[m].i + '" aria-label="Remove ' +
+             esc(mine[m].e.name) + '">×</button></li>';
+      }
+      h += "</ul>";
+    }
+    h += "</div>";
+  }
+  $("benchgrid").innerHTML = h;
+
+  var btns = $("benchgrid").querySelectorAll("button[data-drop]");
+  for (var b=0;b<btns.length;b++){
+    btns[b].onclick = function(){
+      state.kept.splice(parseInt(this.getAttribute("data-drop"),10), 1);
+      save(); refresh();
+    };
+  }
+}
+
+function renderProgress(){
+  var left = state.start - state.dumped;
+  $("progress").innerHTML = "<b>" + left + "</b> left · " + state.dumped +
+    " gone · " + state.kept.length + " banked";
+}
+
+function refresh(){ renderProgress(); renderBench(); renderVerdict(); }
+
+/* ============================================================
+   Type-ahead
+   ============================================================ */
+var sugIndex = -1;
+
+function suggestions(term){
+  var t = norm(term);
+  if (!t) return [];
+  var starts = [], contains = [];
+  for (var i=0;i<DB.length;i++){
+    var nm = norm(DB[i].n);
+    if (nm.indexOf(t) === 0) starts.push(DB[i]);
+    else if (nm.indexOf(t) > -1) contains.push(DB[i]);
+  }
+  return starts.concat(contains).slice(0, 8);
+}
+
+function renderSuggest(){
+  var term = $("q").value;
+  var list = suggestions(term);
+  var box  = $("suggest");
+  if (!list.length) { box.hidden = true; box.innerHTML = ""; return; }
+
+  var h = "";
+  for (var i=0;i<list.length;i++){
+    var m = list[i], label;
+    if (m.r.length) {
+      var ts = [];
+      for (var j=0;j<m.r.length;j++) ts.push(m.r[j].t);
+      label = ts.join(" · ");
+    } else {
+      label = "PvP staple";
+    }
+    h += '<button type="button" data-pick="' + esc(m.n) + '"' + (i === sugIndex ? ' class="active"' : '') +
+         '><span class="sn">' + esc(m.n) + '</span><span class="st">' + esc(label) + '</span></button>';
+  }
+  box.innerHTML = h;
+  box.hidden = false;
+
+  var btns = box.querySelectorAll("button[data-pick]");
+  for (var b=0;b<btns.length;b++){
+    btns[b].onclick = function(){ pick(this.getAttribute("data-pick")); };
+  }
+}
+
+function pick(name){
+  // Switching species must not inherit the last one's moves/CP — that produced wrong TM advice.
+  if (norm(name) !== norm(current)) {
+    $("f-cp").value = "";
+    $("f-fast").value = "";
+    $("f-charged").value = "";
+  }
+  current = name;
+  $("q").value = name;
+  $("suggest").hidden = true;
+  sugIndex = -1;
+  fillMoveList(name);
+  renderVerdict();
+  $("verdictWrap").scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+
+function fillMoveList(name){
+  var mon = byName(name), h = "";
+  if (mon) {
+    var seen = {};
+    for (var i=0;i<mon.r.length;i++){
+      var mv = [mon.r[i].f, mon.r[i].c];
+      for (var k=0;k<mv.length;k++){
+        if (!seen[mv[k]]) { seen[mv[k]] = 1; h += '<option value="' + esc(mv[k]) + '"></option>'; }
+      }
+    }
+  }
+  $("movelist").innerHTML = h;
+}
+
+/* ============================================================
+   Screenshot scan (best effort)
+   ============================================================ */
+var tessReady = null;
+
+function loadTesseract(){
+  if (tessReady) return tessReady;
+  tessReady = new Promise(function(resolve, reject){
+    if (window.Tesseract) { resolve(window.Tesseract); return; }
+    var s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    s.onload = function(){ window.Tesseract ? resolve(window.Tesseract) : reject(new Error("loaded but missing")); };
+    s.onerror = function(){ reject(new Error("network")); };
+    document.head.appendChild(s);
+  });
+  return tessReady;
+}
+
+function preprocess(img){
+  var maxW = 1000;
+  var scale = Math.min(1, maxW / img.width);
+  var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+  var c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  var x = c.getContext("2d");
+  x.drawImage(img, 0, 0, w, h);
+  var d = x.getImageData(0, 0, w, h), a = d.data;
+  for (var i=0;i<a.length;i+=4){
+    var g = 0.299*a[i] + 0.587*a[i+1] + 0.114*a[i+2];
+    var v = g > 165 ? 0 : 255;          // GO's text is light on darker art — invert to dark-on-white
+    a[i] = a[i+1] = a[i+2] = v; a[i+3] = 255;
+  }
+  x.putImageData(d, 0, 0);
+  return c;
+}
+
+function lev(a, b){
+  var m = a.length, n = b.length, prev = [], cur = [], i, j;
+  for (j=0;j<=n;j++) prev[j] = j;
+  for (i=1;i<=m;i++){
+    cur[0] = i;
+    for (j=1;j<=n;j++){
+      cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    }
+    for (j=0;j<=n;j++) prev[j] = cur[j];
+  }
+  return prev[n];
+}
+
+function matchSpecies(text){
+  var flat = norm(text);
+  var best = null, bestScore = 1e9;
+  for (var i=0;i<DB.length;i++){
+    var nm = norm(DB[i].n);
+    if (nm.length < 4) continue;
+    if (flat.indexOf(nm) > -1) return DB[i];               // clean hit
+    // sliding fuzzy window for OCR noise
+    for (var s=0; s+nm.length <= flat.length; s++){
+      var d = lev(nm, flat.substr(s, nm.length));
+      if (d < bestScore) { bestScore = d; best = DB[i]; }
+    }
+  }
+  return (best && bestScore <= Math.max(1, Math.floor(norm(best.n).length * 0.25))) ? best : null;
+}
+
+function setupScan(){
+  var drop = $("drop"), out = $("scanout"), bar = $("bar");
+
+  function log(s){ out.textContent = s; }
+
+  function run(files){
+    if (!files || !files.length) return;
+    drop.classList.add("busy");
+    log("Loading OCR engine…");
+    loadTesseract().then(function(T){
+      var file = files[0];
+      if (files.length > 1) log("Scanning first of " + files.length + " (one at a time)…");
+      var img = new Image();
+      img.onload = function(){
+        URL.revokeObjectURL(img.src);
+        var canvas = preprocess(img);
+        log("Reading…");
+        T.recognize(canvas, "eng", {
+          logger: function(m){
+            if (m.status === "recognizing text") bar.style.width = Math.round(m.progress*100) + "%";
+          }
+        }).then(function(res){
+          bar.style.width = "0%";
+          drop.classList.remove("busy");
+          var text = (res && res.data && res.data.text) || "";
+          var cpm  = text.match(/\bCP\s*([0-9]{2,5})/i);
+          var mon  = matchSpecies(text);
+          var lines = [];
+          lines.push(mon ? "Species: " + mon.n : "Species: not recognised");
+          lines.push(cpm ? "CP: " + cpm[1] : "CP: not found");
+          lines.push("");
+          lines.push("Raw text:");
+          lines.push(text.trim().slice(0, 400) || "(nothing legible)");
+          log(lines.join("\n"));
+
+          if (mon) {
+            pick(mon.n);                          // clears fields, so fill CP after
+            if (cpm) $("f-cp").value = cpm[1];
+            $("moreBox").open = true;
+            renderVerdict();
+            showTab("decide");
+            toast("Found " + mon.n + " — check it's right");
+          } else {
+            toast("Couldn't read it — enter it on the Decide tab");
+          }
+        }).catch(function(e){
+          drop.classList.remove("busy"); bar.style.width = "0%";
+          log("OCR failed: " + e.message + "\nUse the Decide tab instead.");
+        });
+      };
+      img.onerror = function(){
+        drop.classList.remove("busy");
+        log("Couldn't open that image.");
+      };
+      img.src = URL.createObjectURL(file);
+    }).catch(function(){
+      drop.classList.remove("busy");
+      log("Couldn't load the OCR engine — it needs internet the first time.\n" +
+          "The Decide tab works fully offline; use that.");
+    });
+  }
+
+  $("file").addEventListener("change", function(){ run(this.files); });
+  ["dragenter","dragover"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("busy"); });
+  });
+  ["dragleave","drop"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("busy"); });
+  });
+  drop.addEventListener("drop", function(e){
+    if (e.dataTransfer && e.dataTransfer.files) run(e.dataTransfer.files);
+  });
+}
+
+/* ============================================================
+   Tabs, toast, boot
+   ============================================================ */
+var TABS = ["decide","bench","scan","guide"];
+function showTab(name){
+  for (var i=0;i<TABS.length;i++){
+    var on = TABS[i] === name;
+    $("t-"+TABS[i]).setAttribute("aria-selected", on ? "true" : "false");
+    $("p-"+TABS[i]).hidden = !on;
+  }
+  if (name === "bench") renderBench();
+}
+
+var toastTimer = null;
+function toast(msg){
+  var t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 1900);
+}
+
+function boot(){
+  load();
+
+  // guard checkboxes
+  var gh = "";
+  for (var i=0;i<GUARDS.length;i++){
+    gh += '<label class="chk"><input type="checkbox" id="g-' + GUARDS[i].k + '"><span>' +
+          GUARDS[i].l + '</span></label>';
+  }
+  $("guards").innerHTML = gh;
+  var chks = $("guards").querySelectorAll("input");
+  for (var c=0;c<chks.length;c++){
+    chks[c].addEventListener("change", function(){
+      this.parentNode.classList.toggle("on", this.checked);
+      renderVerdict();
+    });
+  }
+
+  for (var t=0;t<TABS.length;t++){
+    (function(name){ $("t-"+name).addEventListener("click", function(){ showTab(name); }); })(TABS[t]);
+  }
+
+  var q = $("q");
+  q.addEventListener("input", function(){ sugIndex = -1; renderSuggest(); });
+  q.addEventListener("keydown", function(e){
+    var box = $("suggest");
+    var list = box.hidden ? [] : box.querySelectorAll("button[data-pick]");
+    if (e.key === "ArrowDown" && list.length){
+      e.preventDefault(); sugIndex = Math.min(sugIndex+1, list.length-1); renderSuggest();
+    } else if (e.key === "ArrowUp" && list.length){
+      e.preventDefault(); sugIndex = Math.max(sugIndex-1, 0); renderSuggest();
+    } else if (e.key === "Enter"){
+      e.preventDefault();
+      if (list.length) pick(list[sugIndex >= 0 ? sugIndex : 0].getAttribute("data-pick"));
+      else { current = q.value.trim(); if (current) renderVerdict(); }
+      box.hidden = true;
+    } else if (e.key === "Escape"){
+      box.hidden = true;
+    }
+  });
+  q.addEventListener("blur", function(){ setTimeout(function(){ $("suggest").hidden = true; }, 160); });
+
+  ["f-cp","f-fast","f-charged"].forEach(function(id){
+    $(id).addEventListener("input", function(){ if (current) renderVerdict(); });
+  });
+
+  var copies = document.querySelectorAll("button[data-copy]");
+  for (var k=0;k<copies.length;k++){
+    copies[k].addEventListener("click", function(){
+      var txt = this.getAttribute("data-copy"), btn = this;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(function(){
+          btn.textContent = "Copied";
+          setTimeout(function(){ btn.textContent = "Copy"; }, 1400);
+        }, function(){ toast("Select the text and copy it manually"); });
+      } else {
+        toast("Select the text and copy it manually");
+      }
+    });
+  }
+
+  $("reset").addEventListener("click", function(){
+    if (!confirm("Clear your bench and both counters? This cannot be undone.")) return;
+    state = { start: 2678, kept: [], dumped: 0 };
+    save(); refresh(); toast("Reset");
+  });
+
+  setupScan();
+  refresh();
+  q.focus();
+}
+
+boot();
+</script>
+</body>
+</html>
